@@ -1,0 +1,32 @@
+{
+	"name": ".NET SDK",
+	"image": "mcr.microsoft.com/dotnet/sdk:10.0",
+	"initializeCommand": "docker pull mcr.microsoft.com/dotnet/sdk:10.0",
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": { // https://github.com/devcontainers/features/tree/main/src/common-utils
+			"upgradePackages": false
+		},
+		"ghcr.io/hwaien/devcontainer-features/match-host-time-zone": {}
+	},
+	"remoteEnv": {
+		"TZ": "Asia/Yekaterinburg"
+	},
+	"runArgs": ["--name", "filesync_${localEnv:USER}"],
+	"shutdownAction": "stopContainer",
+	"mounts": [
+		"type=bind,source=${localEnv:HOME}/.bash_history,target=/root/.bash_history"
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"mhutchie.git-graph",
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.vscodeintellicode-csharp",
+				"kreativ-software.csharpextensions",
+				"EditorConfig.editorconfig",
+				"ms-vscode.powershell",
+				"ms-azuretools.vscode-docker"
+			]
+		}
+	}
+}

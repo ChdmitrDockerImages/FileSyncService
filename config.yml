@@ -1,0 +1,25 @@
+config:
+  log:
+    path: log/filesync.log
+    rotation:
+      max_size_mb: 10
+      max_files: 5
+  auth:
+    - username: admin
+      password: admin
+  https:
+    port: 8080
+    cert_path_public: cert/server.crt
+    cert_path_private: cert/server.key
+  sync:
+    schedule:
+      - 0 0 3 * * *
+
+files:
+  private: data/private/
+  public: data/public/
+  mirror:
+    unblock_lists:
+      dnsmasq-nfset.lst: https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-dnsmasq-nfset.lst
+    lampa:
+      etor.js: https://cub.red/plugin/etor
