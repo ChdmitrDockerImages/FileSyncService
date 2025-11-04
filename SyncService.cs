@@ -29,7 +29,7 @@ namespace FileSyncServer
             {
                 var now = DateTime.UtcNow;
                 var nextRuns = schedules
-                    .Select(c => c.GetNextOccurrence(now))
+                    .Select(c => c.GetNextOccurrence(now, TimeZoneInfo.Local))
                     .Where(t => t.HasValue)
                     .Select(t => t!.Value)
                     .ToList();
