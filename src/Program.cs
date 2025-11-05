@@ -69,14 +69,25 @@ foreach (var auth in cfg.Config.Auth)
 {
     if (auth.Username.StartsWith("env."))
     {
-        var envVar = Environment.GetEnvironmentVariable(auth.Username["env.".Length..])
-            ?? throw new InvalidOperationException($"Missing environment variable: {auth.Username} (for username)");
+        var varName = auth.Username["env.".Length..];
+        var envVar = Environment.GetEnvironmentVariable(varName);
+        if (string.IsNullOrEmpty(envVar))
+        {
+            Console.Error.WriteLine($"❌ Missing environment variable: {varName} (for username field)");
+            Environment.Exit(1);
+        }
         auth.Username = envVar;
     }
+
     if (auth.Password.StartsWith("env."))
     {
-        var envVar = Environment.GetEnvironmentVariable(auth.Password["env.".Length..])
-            ?? throw new InvalidOperationException($"Missing environment variable: {auth.Password} (for password)");
+        var varName = auth.Password["env.".Length..];
+        var envVar = Environment.GetEnvironmentVariable(varName);
+        if (string.IsNullOrEmpty(envVar))
+        {
+            Console.Error.WriteLine($"❌ Missing environment variable: {varName} (for password field)");
+            Environment.Exit(1);
+        }
         auth.Password = envVar;
     }
 }
