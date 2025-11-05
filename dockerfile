@@ -8,14 +8,16 @@ RUN dotnet restore -r linux-musl-x64
 
 COPY src .
 
-RUN dotnet publish --no-restore -c Release -o /app -r linux-musl-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true
+RUN dotnet publish --no-restore -c Release -o /app -r linux-musl-x64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:PublishAot=true -p:StaticLinkRuntime=true
+# --self-contained true
 
 # Runtime
 FROM alpine:3.22.2 AS runtime
 
 WORKDIR /app
 
-RUN apk upgrade --no-cache && apk add --no-cache icu-libs tzdata
+RUN apk upgrade --no-cache && apk add --no-cache icu-libs libstdc++ tzdata
+# glibc libgcc_s
 
 RUN addgroup -S appgroup -g 431 && adduser -S -u 431 -G appgroup appuser
 USER appuser
@@ -24,6 +26,8 @@ COPY --from=build --chown=appuser:appgroup /app ./
 
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
+RUN chmod +x ./FileSyncServer.dll
+
 EXPOSE 8080
 
-ENTRYPOINT ["./FileSyncServer"]
+ENTRYPOINT ["./FileSyncServer.dll"]
