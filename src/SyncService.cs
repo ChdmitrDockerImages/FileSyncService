@@ -2,20 +2,14 @@ using Cronos;
 
 namespace FileSyncServer
 {
-    public class SyncService : BackgroundService
+    public class SyncService(FileSyncConfig cfg, ILogger<SyncService> log) : BackgroundService
     {
-        private readonly FileSyncConfig _cfg;
-        private readonly ILogger<SyncService> _logger;
+        private readonly FileSyncConfig _cfg = cfg;
+        private readonly ILogger<SyncService> _logger = log;
         private readonly HttpClient _client = new()
         {
             Timeout = TimeSpan.FromSeconds(5)
         };
-
-        public SyncService(FileSyncConfig cfg, ILogger<SyncService> log)
-        {
-            _cfg = cfg;
-            _logger = log;
-        }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -37,7 +31,7 @@ namespace FileSyncServer
                 var delay = nextRuns.Count != 0 ? nextRuns.Min() - now : TimeSpan.FromHours(12);
                 if (delay < TimeSpan.Zero) delay = TimeSpan.FromMinutes(1);
 
-                _logger.LogInformation("Next sync in {Delay}", delay);
+                _logger.LogInformation("Next sync in {Delay} at {NextRun}", delay, nextRuns.Min().ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss zzz"));
                 await Task.Delay(delay, stoppingToken);
 
                 await SyncAll();
