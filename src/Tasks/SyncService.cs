@@ -37,8 +37,7 @@ public class SyncService : BackgroundService
             }
             catch (Exception ex)
             {
-                if (_logger.IsEnabled(LogLevel.Error))
-                    _logger.LogError("Sync at start failed: {ex}", ex.Message);
+                _logger.LogError("Sync at start failed: {ex}", ex.Message);
             }
         }
 
