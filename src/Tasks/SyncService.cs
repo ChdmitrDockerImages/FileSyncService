@@ -47,7 +47,7 @@ public class SyncService(FileSyncConfig cfg, ILogger<SyncService> log) : Backgro
     public async Task SyncAll()
     {
         _logger.LogInformation("🔄 Starting synchronization...");
-        var mirrorBasePath = FileServerExtensions.NormalizePath(_cfg.Files.Mirror!.BasePath);
+        var mirrorBasePath = Extensions.FileServerExtensions.NormalizePath(_cfg.Files.Mirror!.BasePath);
 
         foreach (var category in _cfg.Files.Mirror.Data)
         {

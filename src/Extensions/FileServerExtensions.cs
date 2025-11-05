@@ -1,6 +1,6 @@
 using Microsoft.Extensions.FileProviders;
 
-namespace FileSyncServer;
+namespace FileSyncServer.Extensions;
 
 public static class FileServerExtensions
 {

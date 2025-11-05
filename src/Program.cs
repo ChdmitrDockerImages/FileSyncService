@@ -4,6 +4,7 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using FileSyncServer;
 using FileSyncServer.Tasks;
+using FileSyncServer.Extensions;
 
 const string configPath = "config.yml";
 
@@ -131,9 +132,9 @@ logger.LogInformation(" FileSyncServer started");
 logger.LogInformation("--------------------------------------------------");
 logger.LogInformation("HTTPS port:        {Port}", cfg.Config.Https.Port);
 logger.LogInformation("Log file:          {LogPath}", Path.GetFullPath(logPath));
-logger.LogInformation("Public directory:  {Path}", FileSyncServer.FileServerExtensions.NormalizePath(cfg.Files.Public));
-logger.LogInformation("Private directory: {Path}", FileSyncServer.FileServerExtensions.NormalizePath(cfg.Files.Private));
-logger.LogInformation("Mirror root:       {Path}", FileSyncServer.FileServerExtensions.NormalizePath("data/mirror"));
+logger.LogInformation("Public directory:  {Path}", FileSyncServer.Extensions.FileServerExtensions.NormalizePath(cfg.Files.Public));
+logger.LogInformation("Private directory: {Path}", FileSyncServer.Extensions.FileServerExtensions.NormalizePath(cfg.Files.Private));
+logger.LogInformation("Mirror root:       {Path}", FileSyncServer.Extensions.FileServerExtensions.NormalizePath("data/mirror"));
 logger.LogInformation("Sync schedule:");
 foreach (var s in cfg.Config.Sync.Schedule)
     logger.LogInformation("  - {Schedule}", s);
