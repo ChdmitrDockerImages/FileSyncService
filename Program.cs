@@ -4,12 +4,65 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using FileSyncServer;
 
-var yaml = File.ReadAllText("config.yml");
-var deserializer = new DeserializerBuilder()
-    .WithNamingConvention(UnderscoredNamingConvention.Instance)
-    .Build();
+const string configPath = "config.yml";
 
-var cfg = deserializer.Deserialize<FileSyncConfig>(yaml);
+// Проверяем наличие файла конфигурации
+if (!File.Exists(configPath))
+{
+    Console.Error.WriteLine($"❌ Configuration file not found: {Path.GetFullPath(configPath)}");
+    Console.Error.WriteLine("Please ensure config.yml exists in the working directory.");
+    Environment.Exit(1);
+}
+
+string yaml;
+try
+{
+    yaml = File.ReadAllText(configPath);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"❌ Failed to read configuration file: {ex.Message}");
+    Environment.Exit(1);
+    throw; // Недостижимо, но нужно для компиляции
+}
+
+FileSyncConfig cfg;
+try
+{
+    var deserializer = new DeserializerBuilder()
+        .WithNamingConvention(UnderscoredNamingConvention.Instance)
+        .Build();
+
+    cfg = deserializer.Deserialize<FileSyncConfig>(yaml)
+        ?? throw new InvalidOperationException("Configuration file is empty or invalid YAML.");
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"❌ Failed to parse configuration file: {ex.Message}");
+    Environment.Exit(1);
+    throw;
+}
+
+// Проверка наличия сертификатов
+var publicCertPath = cfg.Config.Https.CertPathPublic;
+var privateCertPath = cfg.Config.Https.CertPathPrivate;
+if (string.IsNullOrWhiteSpace(publicCertPath) || string.IsNullOrWhiteSpace(privateCertPath))
+{
+    Console.Error.WriteLine("❌ Invalid HTTPS certificate paths in config.yml (cert_path_public / cert_path_private).");
+    Environment.Exit(1);
+}
+
+if (!File.Exists(publicCertPath))
+{
+    Console.Error.WriteLine($"❌ HTTPS public certificate not found: {Path.GetFullPath(publicCertPath)}");
+    Environment.Exit(1);
+}
+
+if (!File.Exists(privateCertPath))
+{
+    Console.Error.WriteLine($"❌ HTTPS private key not found: {Path.GetFullPath(privateCertPath)}");
+    Environment.Exit(1);
+}
 
 // Подставляем переменные окружения
 foreach (var auth in cfg.Config.Auth)
@@ -22,8 +75,8 @@ foreach (var auth in cfg.Config.Auth)
     }
     if (auth.Password.StartsWith("env."))
     {
-        var envVar = Environment.GetEnvironmentVariable(auth.Username["env.".Length..])
-            ?? throw new InvalidOperationException($"Missing environment variable: {auth.Password} (for username)");
+        var envVar = Environment.GetEnvironmentVariable(auth.Password["env.".Length..])
+            ?? throw new InvalidOperationException($"Missing environment variable: {auth.Password} (for password)");
         auth.Password = envVar;
     }
 }
@@ -45,14 +98,13 @@ if (string.IsNullOrWhiteSpace(logPath))
     Directory.CreateDirectory("logs");
     logPath = Path.Combine("logs", "filesync.log");
 }
-var rotation = cfg.Config.Log.Rotation ?? new FileSyncConfig.ConfigSection.LogSection.RotationSection();
+var rotation = cfg.Config.Log?.Rotation ?? new FileSyncConfig.ConfigSection.LogSection.RotationSection();
 builder.Logging.AddFile(logPath, rotation.MaxSizeMb, rotation.MaxFiles);
 
+// HTTPS
 builder.WebHost.ConfigureKestrel(opt =>
 {
-    var cert = X509Certificate2.CreateFromPemFile(
-        cfg.Config.Https.CertPathPublic,
-        cfg.Config.Https.CertPathPrivate);
+    var cert = X509Certificate2.CreateFromPemFile(publicCertPath, privateCertPath);
     opt.ListenAnyIP(cfg.Config.Https.Port, listen => listen.UseHttps(cert));
 });
 
@@ -70,11 +122,13 @@ logger.LogInformation("--------------------------------------------------");
 logger.LogInformation(" FileSyncServer started");
 logger.LogInformation("--------------------------------------------------");
 logger.LogInformation("HTTPS port:        {Port}", cfg.Config.Https.Port);
-logger.LogInformation("Log file:          {LogPath}", Path.GetFullPath(cfg.Config.Log.Path));
+logger.LogInformation("Log file:          {LogPath}", Path.GetFullPath(logPath));
 logger.LogInformation("Public directory:  {Path}", FileSyncServer.FileServerExtensions.NormalizePath(cfg.Files.Public));
 logger.LogInformation("Private directory: {Path}", FileSyncServer.FileServerExtensions.NormalizePath(cfg.Files.Private));
 logger.LogInformation("Mirror root:       {Path}", FileSyncServer.FileServerExtensions.NormalizePath("data/mirror"));
-logger.LogInformation("Sync schedule:     {Schedule}", string.Join(", ", cfg.Config.Sync.Schedule));
+logger.LogInformation("Sync schedule:");
+foreach (var s in cfg.Config.Sync.Schedule)
+    logger.LogInformation("  - {Schedule}", s);
 logger.LogInformation("--------------------------------------------------");
 
 // Ручной триггер только с localhost
@@ -89,7 +143,7 @@ app.MapPost("/sync/now", async (HttpContext ctx, SyncService sync, ILogger<Progr
 
     log.LogInformation("Manual sync triggered from localhost");
     await sync.SyncAll();
-    return Results.Ok(new { status = "started", time = DateTime.UtcNow });
+    return Results.Ok(new { status = "started", time = DateTime.Now });
 });
 
 // Триггерим при старте
