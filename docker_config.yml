@@ -1,25 +1,27 @@
+# Configuration for Docker test run
 config:
   log:
-    path: ../log/filesync.log
+    path: /log/filesync.log
     rotation:
       max_size_mb: 10
       max_files: 5
   auth:
-    - username: admin
-      password: admin
+    - username: env.TEST_USERNAME
+      password: env.TEST_PASSWORD
   https:
     port: 8080
-    cert_path_public: ../cert/server.crt
-    cert_path_private: ../cert/server.key
+    # Run gen_cert.sh to generate test certificates
+    cert_path_public: /cert/server.crt
+    cert_path_private: /cert/server.key
   sync:
     schedule:
       - '* * * * *'
 
 files:
-  private: ../data/private/
-  public: ../data/public/
+  private: /data/private/
+  public: /data/public/
   mirror:
-    base_path: ../data/mirror
+    base_path: /data/mirror
     data:
       unblock_lists:
         dnsmasq-nfset.lst: https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-dnsmasq-nfset.lst
