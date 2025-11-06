@@ -99,12 +99,25 @@
         document.getElementById('privatePath').textContent = meta.privatePath;
         document.getElementById('mirrorPath').textContent = meta.mirrorPath;
 
+        function localTime(value) {
+          options = {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'longOffset'
+          }
+          return value ? new Date(value).toLocaleString(undefined, options) : "–––";
+        }
+
         const s = meta.syncStatus;
         if (s) {
-          document.getElementById('lastRun').textContent = s.lastRun || "–";
-          document.getElementById('nextRun').textContent = s.nextRun || "–";
-          document.getElementById('duration').textContent = s.duration || "–";
-          document.getElementById('updatedFiles').textContent = s.updatedFiles ?? "–";
+          document.getElementById('lastRun').textContent = localTime(s.lastRun);
+          document.getElementById('nextRun').textContent = localTime(s.nextRun);
+          document.getElementById('duration').textContent = s.duration || "–––";
+          document.getElementById('updatedFiles').textContent = s.updatedFiles ?? "–––";
 
           const st = document.getElementById('status');
           if (s.status === "ok" || s.status === "Ok") {
@@ -121,7 +134,7 @@
             st.className = "";
           }
 
-          document.getElementById('error').textContent = s.error || "–";
+          document.getElementById('error').textContent = s.error || "–––";
         } else {
           document.getElementById('syncStatus').innerHTML =
             "<tr><td colspan='2'>Sync has not been performed yet</td></tr>";
@@ -135,9 +148,7 @@
       }
     }
 
-    // Load immediately on open
     loadMeta();
-    // Auto-refresh every 15 seconds
     setInterval(loadMeta, 15000);
   </script>
 </body>
