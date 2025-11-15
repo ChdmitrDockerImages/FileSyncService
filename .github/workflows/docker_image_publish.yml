@@ -1,4 +1,4 @@
-name: Build and Push to Docker Hub
+name: Build, Push Docker Image & Create Release
 
 on:
   push:
@@ -38,3 +38,17 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## Docker Image
+            ```bash
+            docker pull index.docker.io/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
