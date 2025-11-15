@@ -2,7 +2,6 @@ name: Build and Push to Docker Hub
 
 on:
   push:
-    branches: [ master ]
     tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
 
 env:
@@ -19,7 +18,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
@@ -27,6 +26,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            latest
 
       - name: Build and push
         id: push
@@ -36,10 +38,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-name: index.docker.io/${{ env.DOCKER_IMAGE_NAME  }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
