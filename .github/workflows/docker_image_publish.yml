@@ -46,7 +46,7 @@ jobs:
       - name: Extract tag message
         id: tag_message
         run: |
-          TAG_MESSAGE=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
+          TAG_MESSAGE=$(git for-each-ref refs/tags/${{ github.ref_name }} --format="%(contents)")
           if [ -z "$TAG_MESSAGE" ]; then
             TAG_MESSAGE="No description provided"
           fi
@@ -59,8 +59,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          generate_release_notes: true
-          assets: ""
+          generate_release_notes: false
           body: |
             ## Description
             ${{ steps.tag_message.outputs.message }}
