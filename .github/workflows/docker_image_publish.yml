@@ -51,10 +51,9 @@ jobs:
         run: |
           {
             echo 'annotation<<EOF'
-            git for-each-ref "${{ github.ref }}" --format '%(contents)'
+            git tag -l --format='%(contents:subject) ${{ github.ref_name }}
             echo 'EOF'
           } >>"${GITHUB_OUTPUT}"
-
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
