@@ -138,14 +138,19 @@ var app = builder.Build();
 
 app.Use(async (context, next) =>
 {
-    var ip = context.Connection.RemoteIpAddress?.ToString() ?? "-";
-    context.RequestServices
-        .GetRequiredService<ILoggerFactory>()
-        .CreateLogger("RequestLogger")
-        .LogInformation("Request {Method} {Path} from {IP}",
+    var ip = context.Connection.RemoteIpAddress;
+
+    if (ip != null && ip.IsIPv4MappedToIPv6)
+        ip = ip.MapToIPv4();
+
+    string ipString = ip?.ToString() ?? "-";
+
+    var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("RequestLogger");
+    if (logger.IsEnabled(LogLevel.Information))
+        logger.LogInformation("Request [{Method}] [{Path}] from [{IP}]",
             context.Request.Method,
             context.Request.Path,
-            ip);
+            ipString);
 
     await next();
 });
