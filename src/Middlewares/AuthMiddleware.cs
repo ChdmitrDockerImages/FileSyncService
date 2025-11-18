@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace FileSyncService;
+namespace FileSyncService.Middlewares;
 
 public class AuthMiddleware
 {

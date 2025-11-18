@@ -7,6 +7,7 @@ using FileSyncService.Tasks;
 using FileSyncService.Extensions;
 using FileServerExtensions = FileSyncService.Extensions.FileServerExtensions;
 using Microsoft.Extensions.FileProviders;
+using FileSyncService.Middlewares;
 
 const string configPath = "config.yml";
 
@@ -135,26 +136,7 @@ builder.Services.AddHostedService(provider => provider.GetRequiredService<FileSy
 #region Web app configure
 
 var app = builder.Build();
-
-app.Use(async (context, next) =>
-{
-    var ip = context.Connection.RemoteIpAddress;
-
-    if (ip != null && ip.IsIPv4MappedToIPv6)
-        ip = ip.MapToIPv4();
-
-    string ipString = ip?.ToString() ?? "-";
-
-    var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("RequestLogger");
-    if (logger.IsEnabled(LogLevel.Information))
-        logger.LogInformation("Request [{Method}] [{Path}] from [{IP}]",
-            context.Request.Method,
-            context.Request.Path,
-            ipString);
-
-    await next();
-});
-
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<AuthMiddleware>(cfg);
 app.MapStaticFiles(cfg);
 
